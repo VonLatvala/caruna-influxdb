@@ -1,1 +1,1 @@
-git+https://github.com/Jalle19/pycaruna.git@ba6e48b07a8af24a2334ac8fb97102e93dcb85ec#egg=pycaruna==0.0.1
+git+https://github.com/Jalle19/pycaruna.git@3e67fed18a2fa3c29d2546edd9c50ff89f0beb97#egg=pycaruna==0.0.1
