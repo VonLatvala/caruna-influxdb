@@ -1,0 +1,14 @@
+{
+  "name": "eda-influxdb",
+  "version": "1.0.0",
+  "description": "Ingests data from eda-modbus-bridge into InfluxDB",
+  "main": "caruna-influxdb.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Sam Stenvall <neggelandia@gmail.com>",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "influx": "^5.6.3"
+  }
+}
