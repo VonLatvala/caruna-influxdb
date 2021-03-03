@@ -1,6 +1,6 @@
 import json
 import os
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pycaruna import Caruna, Resolution
 
 
@@ -26,8 +26,10 @@ if __name__ == '__main__':
     customer = client.get_user_profile()
     metering_points = client.get_metering_points(customer['username'])
 
+    # Fetch data from midnight 00:00 7 days ago to 23:59 today
+    start_time = make_min_hour_datetime(date.today() - timedelta(days=7)).astimezone().isoformat()
     end_time = make_max_hour_datetime(date.today()).astimezone().isoformat()
-    start_time = make_min_hour_datetime(date.today().replace(day=1)).astimezone().isoformat()
+
     metering_point = metering_points[0]['meteringPoint']['meteringPointNumber']
 
     consumption = client.get_consumption(customer['username'],
