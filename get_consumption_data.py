@@ -43,8 +43,8 @@ if __name__ == '__main__':
         'date': make_max_hour_datetime(
             date.today().replace(year=item['year'], month=item['month'], day=item['day'])).isoformat(),
         'kwh_total': item['values']['EL_ENERGY_CONSUMPTION#0']['value'],
-        #'kwh_night': item['values']['EL_ENERGY_CONSUMPTION#2']['value'],
-        #'kwh_day': item['values']['EL_ENERGY_CONSUMPTION#3']['value'],
+        'kwh_night': item['values']['EL_ENERGY_CONSUMPTION#2']['value'],
+        'kwh_day': item['values']['EL_ENERGY_CONSUMPTION#3']['value'],
     }, filtered_consumption))
 
     print(json.dumps(mapped_consumption))
