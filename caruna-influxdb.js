@@ -4,26 +4,41 @@ const Influx = require('influx')
 getSchemaDefinition = function () {
   return [
     {
-      measurement: 'consumption',
+      measurement: 'carunaplus_consumption',
       fields: {
-        'kwh_total': Influx.FieldType.FLOAT,
-        'kwh_night': Influx.FieldType.FLOAT,
-        'kwh_day': Influx.FieldType.FLOAT,
+        'totalConsumption': Influx.FieldType.FLOAT,
+        'invoicedConsumption': Influx.FieldType.FLOAT,
+        'totalFee': Influx.FieldType.FLOAT,
+        'distributionFee': Influx.FieldType.FLOAT,
+        'distributionBaseFee': Influx.FieldType.FLOAT,
+        'electricityTax': Influx.FieldType.FLOAT,
+        'valueAddedTax': Influx.FieldType.FLOAT,
+        'temperature': Influx.FieldType.FLOAT,
       },
-      tags: []
+      tags: [
+        'assetId',
+      ]
     }
   ]
 }
 
-createPoint = function (consumption) {
+createPoint = function (dataPoint) {
   return {
-    measurement: 'consumption',
-    timestamp: (new Date(consumption.date)).getTime() * 1000 * 1000, // nanoseconds
+    measurement: 'carunaplus_consumption',
+    timestamp: Date.parse(dataPoint.timestamp) * 1000 * 1000, // nanoseconds
     fields: {
-      'kwh_total': consumption.kwh_total,
-      'kwh_night': consumption.kwh_night,
-      'kwh_day': consumption.kwh_day,
+      totalConsumption: dataPoint.totalConsumption,
+      invoicedConsumption: dataPoint.invoicedConsumption,
+      totalFee: dataPoint.totalFee,
+      distributionFee: dataPoint.distributionFee,
+      distributionBaseFee: dataPoint.distributionBaseFee,
+      electricityTax: dataPoint.electricityTax,
+      valueAddedTax: dataPoint.valueAddedTax,
+      temperature: dataPoint.temperature,
     },
+    tags: {
+      assetId: dataPoint.assetId,
+    }
   }
 }
 

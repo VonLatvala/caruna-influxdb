@@ -1,16 +1,8 @@
 import json
 import os
-from datetime import date, datetime, timedelta
-from pycaruna import Caruna, Resolution
-
-
-def make_min_hour_datetime(date):
-    return datetime.combine(date, datetime.min.time())
-
-
-def make_max_hour_datetime(date):
-    return datetime.combine(date, datetime.max.time()).replace(microsecond=0)
-
+import sys
+from datetime import date, timedelta
+from pycaruna import CarunaPlus, TimeSpan, Authenticator
 
 if __name__ == '__main__':
     username = os.getenv('CARUNA_USERNAME')
@@ -19,32 +11,49 @@ if __name__ == '__main__':
     if username is None or password is None:
         raise Exception('CARUNA_USERNAME and CARUNA_PASSWORD must be defined')
 
-    client = Caruna(username, password)
-    client.login()
+    if len(sys.argv) < 4:
+        print('Usage: ' + sys.argv[0] + "<year> <month> <day>")
+        sys.exit(1)
 
-    # Get customer details and metering points so we can get the required identifiers
-    customer = client.get_user_profile()
-    metering_points = client.get_metering_points(customer['username'])
+    # Authenticate to receive token and customer ID
+    authenticator = Authenticator(username, password)
+    login_result = authenticator.login()
 
-    # Fetch data from midnight 00:00 7 days ago to 23:59 today
-    start_time = make_min_hour_datetime(date.today() - timedelta(days=7)).astimezone().isoformat()
-    end_time = make_max_hour_datetime(date.today()).astimezone().isoformat()
+    token = login_result['token']
+    customer_id = login_result['user']['ownCustomerNumbers'][0]
+    client = CarunaPlus(token)
+    customer = client.get_user_profile(customer_id)
 
-    metering_point = metering_points[0]['meteringPoint']['meteringPointNumber']
+    consumption_data = []
 
-    consumption = client.get_consumption(customer['username'],
-                                         metering_points[0]['meteringPoint']['meteringPointNumber'],
-                                         Resolution.DAYS, True,
-                                         start_time, end_time)
+    # Loop through each metering point (often just one)
+    metering_points = client.get_assets(customer_id)
 
-    # Extract the relevant data, filter out days without values (usually the most recent datapoint)
-    filtered_consumption = [item for item in consumption if item['values']]
-    mapped_consumption = list(map(lambda item: {
-        'date': make_max_hour_datetime(
-            date.today().replace(year=item['year'], month=item['month'], day=item['day'])).isoformat(),
-        'kwh_total': item['values']['EL_ENERGY_CONSUMPTION#0']['value'],
-        'kwh_night': item['values']['EL_ENERGY_CONSUMPTION#2']['value'],
-        'kwh_day': item['values']['EL_ENERGY_CONSUMPTION#3']['value'],
-    }, filtered_consumption))
+    for metering_point in metering_points:
+        asset_id = metering_point['assetId']
+        print("Fetching data for metering point " + asset_id)
 
-    print(json.dumps(mapped_consumption))
+        # Start looping through each date since the specified start date
+        current_date = date(int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3]))
+        print("Fetching hourly consumption data since " + current_date.isoformat(), file=sys.stderr)
+        today = date.today()
+
+        while current_date < today:
+            print("Fetch data for " + current_date.isoformat(), file=sys.stderr)
+            daily_consumption = client.get_energy(customer_id, asset_id, TimeSpan.DAILY, current_date.year,
+                                                  current_date.month, current_date.day)
+
+            # Filter out data points without any consumption
+            daily_consumption_filtered = [data for data in daily_consumption if
+                                          'totalConsumption' in data and data['totalConsumption'] is not None]
+
+            # Add the meter number (asset ID) to all data points so we can tag by it when ingesting to Influx
+            daily_consumption_mapped = list(map(lambda item: {
+                **item,
+                'assetId': int(asset_id),
+            }, daily_consumption_filtered))
+
+            consumption_data += daily_consumption_mapped
+            current_date = current_date + timedelta(days=1)
+
+    print(json.dumps(consumption_data, indent=2))
