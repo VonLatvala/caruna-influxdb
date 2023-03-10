@@ -31,7 +31,7 @@ if __name__ == '__main__':
 
     for metering_point in metering_points:
         asset_id = metering_point['assetId']
-        print("Fetching data for metering point " + asset_id)
+        print("Fetching data for metering point " + asset_id, file=sys.stderr)
 
         # Start looping through each date since the specified start date
         current_date = date(int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3]))
