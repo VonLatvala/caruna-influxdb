@@ -8,6 +8,8 @@ getSchemaDefinition = function () {
       fields: {
         'totalConsumption': Influx.FieldType.FLOAT,
         'invoicedConsumption': Influx.FieldType.FLOAT,
+        'daytimeConsumption': Influx.FieldType.FLOAT,
+        'nighttimeConsumption': Influx.FieldType.FLOAT,
         'totalFee': Influx.FieldType.FLOAT,
         'distributionFee': Influx.FieldType.FLOAT,
         'distributionBaseFee': Influx.FieldType.FLOAT,
@@ -29,6 +31,8 @@ createPoint = function (dataPoint) {
     fields: {
       totalConsumption: dataPoint.totalConsumption,
       invoicedConsumption: dataPoint.invoicedConsumption,
+      daytimeConsumption: dataPoint.invoicedConsumptionByTransferProductParts.daytime ?? 0,
+      nighttimeConsumption: dataPoint.invoicedConsumptionByTransferProductParts.nighttime ?? 0,
       totalFee: dataPoint.totalFee,
       distributionFee: dataPoint.distributionFee,
       distributionBaseFee: dataPoint.distributionBaseFee,
