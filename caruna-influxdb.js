@@ -25,6 +25,7 @@ getSchemaDefinition = function () {
 }
 
 createPoint = function (dataPoint) {
+  console.log("Creating datapoint", dataPoint.timestamp);
   return {
     measurement: 'carunaplus_consumption',
     timestamp: Date.parse(dataPoint.timestamp) * 1000 * 1000, // nanoseconds
@@ -59,6 +60,7 @@ for (const envVar of requiredEnvVars) {
   }
 }
 
+console.log("Creating InfluxDB instance")
 const influx = new Influx.InfluxDB({
   host: process.env.INFLUX_HOST,
   database: process.env.INFLUX_DATABASE,
@@ -66,16 +68,24 @@ const influx = new Influx.InfluxDB({
   password: process.env.INFLUX_PASSWORD,
   schema: getSchemaDefinition(),
 })
+console.log(`Created InfluxDB instance ${process.env.INFLUX_USERNAME}@${process.env.INFLUX_HOST}/${process.env.INFLUX_DATABASE}`)
 
+console.log('Getting database names')
 influx.getDatabaseNames().then((names) => {
+  console.log(`Got database names ${names.join(',')}`)
   if (!names.includes(process.env.INFLUX_DATABASE)) {
     throw new Error(`The specified database "${process.env.INFLUX_DATABASE}" does not exist`)
   }
 
+  console.log("Reading input file")
   const jsonData = fs.readFileSync(0, 'utf-8')
+  console.log("Parsing JSON")
   const consumption = JSON.parse(jsonData)
 
+  console.log("Creating points")
   const points = consumption.map(data => createPoint(data))
 
+  console.log("Writing points to InfluxDB")
   influx.writePoints(points)
+  console.log("Done writing points to InfluxDB")
 })
